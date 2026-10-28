@@ -2,6 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Ack, SocketService } from '../socket.service';
 
+const NAME_KEY = 'poptheballons.name';
+
 @Component({
   selector: 'app-lobby',
   imports: [RouterLink],
@@ -14,13 +16,14 @@ import { Ack, SocketService } from '../socket.service';
         <p><a [routerLink]="['/room', r.code]">Return to room {{ r.code }}</a></p>
       }
 
+      <label class="name-field">
+        Your name
+        <input maxlength="16" placeholder="Name" [value]="name()" (input)="setName(read($event))" />
+      </label>
+
       <div class="grid">
         <section class="card">
           <h2>Create a room</h2>
-          <label>
-            Your name
-            <input maxlength="16" placeholder="Name" [value]="name()" (input)="name.set(read($event))" />
-          </label>
           <label>
             Game length
             <select (change)="duration.set(+read($event))">
@@ -37,10 +40,6 @@ import { Ack, SocketService } from '../socket.service';
           <label>
             Room code
             <input maxlength="5" placeholder="ABCDE" [value]="code()" (input)="code.set(read($event).toUpperCase())" />
-          </label>
-          <label>
-            Your name
-            <input maxlength="16" placeholder="Name" [value]="name()" (input)="name.set(read($event))" />
           </label>
           <button class="primary" [disabled]="busy()" (click)="join()">Join room</button>
         </section>
@@ -59,7 +58,8 @@ export class LobbyComponent {
   protected readonly socket = inject(SocketService);
   private readonly router = inject(Router);
 
-  protected readonly name = signal('');
+  // The name is remembered between visits, so returning to the lobby keeps it.
+  protected readonly name = signal(loadName());
   protected readonly code = signal('');
   protected readonly duration = signal(60);
   protected readonly error = signal('');
@@ -81,6 +81,15 @@ export class LobbyComponent {
     return (event.target as HTMLInputElement | HTMLSelectElement).value;
   }
 
+  protected setName(value: string): void {
+    this.name.set(value);
+    try {
+      localStorage.setItem(NAME_KEY, value);
+    } catch {
+      // Storage can be blocked (private browsing, for example). The name still works for this visit.
+    }
+  }
+
   protected create(): void {
     void this.run(() => this.socket.createRoom(this.name(), this.duration()));
   }
@@ -99,5 +108,13 @@ export class LobbyComponent {
     } else {
       this.error.set(res.error ?? 'Something went wrong');
     }
+  }
+}
+
+function loadName(): string {
+  try {
+    return localStorage.getItem(NAME_KEY) ?? '';
+  } catch {
+    return '';
   }
 }

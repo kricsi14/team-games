@@ -23,12 +23,17 @@ const BROADCAST_EVERY = 2; // positions are sent 10 times per second
 const DRIFT_MS = 500; // balloons pick a new drift every 0.5 s
 const SPAWN_MIN_MS = 450;
 const SPAWN_MAX_MS = 800;
-const BALLOON_CAP = 35;
+// Density grows with the player count: more players means more balloons on screen
+// and more frequent spawns, so there are more to pop.
+const CAP_BASE = 10; // balloons on screen = CAP_BASE + CAP_PER_PLAYER per player
+const CAP_PER_PLAYER = 2;
+const CAP_MAX = 50;
+const SPAWN_PER_PLAYER = 0.1; // extra spawn rate for each player beyond the first
 
 const CANDY_SHARE = 2 / 3; // 2 candy for every 1 ghost
 const GHOST_HOME_CHANCE = 5 / 6; // 5 of 6 ghost drift steps head to the nearest recent pop
 const RECENT_POP_MS = 1000; // a pop counts as "recent" for 1 second
-const GHOST_SPEED = 90; // px per second while homing
+const GHOST_SPEED = 60; // px per second, left or right, while drifting toward a pop
 const DRIFT_SPEED = 30; // px per second, left or right
 
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -82,10 +87,12 @@ function announce(room) {
 }
 
 // Chooses how a balloon moves until the next drift step.
+// Every balloon only rises and moves left or right. Ghosts never fall, so they
+// are not easier to spot by their movement.
 function steer(b, recentPops, now) {
   const recent = recentPops.filter((p) => now - p.t <= RECENT_POP_MS);
   if (b.ghost && recent.length > 0 && Math.random() < GHOST_HOME_CHANCE) {
-    // Ghosts head toward the nearest recent pop.
+    // Ghosts drift left or right toward the nearest recent pop.
     let target = recent[0];
     let best = Infinity;
     for (const p of recent) {
@@ -95,11 +102,11 @@ function steer(b, recentPops, now) {
         target = p;
       }
     }
-    const d = best || 1;
-    b.vx = ((target.x - b.x) / d) * GHOST_SPEED;
-    b.vy = ((target.y - b.y) / d) * GHOST_SPEED;
+    const dir = Math.sign(target.x - b.x) || (Math.random() < 0.5 ? -1 : 1);
+    b.vx = dir * GHOST_SPEED;
+    b.vy = -b.rise;
   } else {
-    // Left or right, 1:1, while still rising.
+    // Left or right, 1:1, while rising.
     b.vx = (Math.random() < 0.5 ? -1 : 1) * DRIFT_SPEED;
     b.vy = -b.rise;
   }
@@ -122,6 +129,14 @@ function newBalloon(room, now) {
   };
   steer(b, room.recentPops, now);
   return b;
+}
+
+function balloonCap(room) {
+  return Math.min(CAP_MAX, CAP_BASE + CAP_PER_PLAYER * room.players.size);
+}
+
+function spawnRate(room) {
+  return 1 + SPAWN_PER_PLAYER * Math.max(0, room.players.size - 1);
 }
 
 function startGame(room) {
@@ -153,9 +168,9 @@ function tick(room) {
   const dt = (now - room.lastTick) / 1000;
   room.lastTick = now;
 
-  if (now >= room.nextSpawnAt && room.balloons.length < BALLOON_CAP) {
+  if (now >= room.nextSpawnAt && room.balloons.length < balloonCap(room)) {
     room.balloons.push(newBalloon(room, now));
-    room.nextSpawnAt = now + rand(SPAWN_MIN_MS, SPAWN_MAX_MS);
+    room.nextSpawnAt = now + rand(SPAWN_MIN_MS, SPAWN_MAX_MS) / spawnRate(room);
   }
 
   room.recentPops = room.recentPops.filter((p) => now - p.t <= RECENT_POP_MS);

@@ -17,13 +17,21 @@ import { GameScene } from './game-scene';
         @case ('lobby') {
           <main class="page">
             <div class="top">
-              <div class="code">{{ r.code }}</div>
+              <button class="code-copy" type="button" title="Click to copy" (click)="copyCode(r.code)">
+                {{ r.code }}
+              </button>
               <div class="top-actions">
                 <button (click)="fullscreen()">Fullscreen</button>
                 <button (click)="leave()">Leave</button>
               </div>
             </div>
-            <p class="hint">Share this code so others can join.</p>
+            <p class="hint">
+              @if (copied()) {
+                Copied to clipboard.
+              } @else {
+                Click the code to copy it, then share it.
+              }
+            </p>
 
             <section class="card">
               <h2>Players ({{ r.players.length }}/20)</h2>
@@ -62,25 +70,36 @@ import { GameScene } from './game-scene';
             <button class="pill" (click)="fullscreen()">Fullscreen</button>
             <button class="pill" (click)="leave()">Leave</button>
           </div>
+          <aside class="board">
+            <div class="board-title">Leaderboard</div>
+            @for (p of ranking(r); track p.id; let i = $index) {
+              <div class="row" [class.me]="p.id === socket.myId()" [class.leader]="i === 0">
+                <span class="bar" [style.width.%]="barWidth(p, r)"></span>
+                <span class="rank">{{ i + 1 }}</span>
+                <span class="name">{{ p.name }}</span>
+                <span class="score" [class.neg]="p.score < 0">{{ p.score }}</span>
+              </div>
+            }
+          </aside>
           <div class="rotate-hint">
             <div class="phone-icon"></div>
             <p>Turn your phone sideways to play.</p>
           </div>
-          <aside class="board">
-            @for (p of ranking(r); track p.id) {
-              <div [class.me]="p.id === socket.myId()">{{ p.name }}: {{ p.score }}</div>
-            }
-          </aside>
         }
 
         @case ('ended') {
           <main class="page">
             <h2>Game over</h2>
-            <ol class="ranking">
-              @for (p of ranking(r); track p.id) {
-                <li>{{ p.name }} <b>{{ p.score }}</b></li>
+            <div class="board results">
+              @for (p of ranking(r); track p.id; let i = $index) {
+                <div class="row" [class.me]="p.id === socket.myId()" [class.leader]="i === 0">
+                  <span class="bar" [style.width.%]="barWidth(p, r)"></span>
+                  <span class="rank">{{ i + 1 }}</span>
+                  <span class="name">{{ p.name }}</span>
+                  <span class="score" [class.neg]="p.score < 0">{{ p.score }}</span>
+                </div>
               }
-            </ol>
+            </div>
             @if (isHost(r)) {
               <button class="primary" (click)="playAgain()">Play again</button>
             }
@@ -114,6 +133,7 @@ export class GameComponent {
   protected readonly remaining = signal(0);
   protected readonly timeLeft = computed(() => formatTime(this.remaining()));
   protected readonly error = signal('');
+  protected readonly copied = signal(false);
   protected readonly fmt = formatTime;
 
   private readonly stage = viewChild<ElementRef<HTMLDivElement>>('stage');
@@ -159,6 +179,28 @@ export class GameComponent {
 
   protected myScore(r: Room): number {
     return r.players.find((p) => p.id === this.socket.myId())?.score ?? 0;
+  }
+
+  // Width of a player's score bar, relative to the top score
+  protected barWidth(p: Player, r: Room): number {
+    const top = Math.max(1, ...r.players.map((x) => x.score));
+    return (Math.max(0, p.score) / top) * 100;
+  }
+
+  protected async copyCode(code: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      // Some browsers and embedded views don't offer the Clipboard API
+      const field = document.createElement('textarea');
+      field.value = code;
+      document.body.appendChild(field);
+      field.select();
+      document.execCommand('copy');
+      field.remove();
+    }
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 1500);
   }
 
   protected async start(): Promise<void> {

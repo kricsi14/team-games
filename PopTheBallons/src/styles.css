@@ -162,25 +162,111 @@ button:disabled {
   position: fixed;
   top: 12px;
   right: 12px;
-  display: grid;
-  gap: 4px;
-  min-width: 170px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(20, 6, 40, 0.7);
-  font-size: 1.05rem;
-  font-weight: 600;
+  width: 240px;
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid rgba(255, 179, 71, 0.35);
+  border-radius: 14px;
+  background: rgba(20, 6, 40, 0.78);
   pointer-events: none;
 }
 
-.board .me {
-  color: #ffe066;
+.board-title {
+  margin-bottom: 8px;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
-.ranking {
+.row {
+  position: relative;
   display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
   gap: 8px;
-  font-size: 1.2rem;
+  margin-bottom: 4px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.row .bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(255, 179, 71, 0.16);
+}
+
+.row .rank,
+.row .name,
+.row .score {
+  position: relative;
+}
+
+.row .rank {
+  text-align: center;
+  font-weight: 800;
+  opacity: 0.8;
+}
+
+.row .name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row .score {
+  font-weight: 800;
+  color: #7cff8a;
+  font-variant-numeric: tabular-nums;
+}
+
+.row .score.neg {
+  color: #ff7b8f;
+}
+
+.row.leader .rank {
+  color: #ffd23f;
+  opacity: 1;
+}
+
+.row.me {
+  outline: 1px solid rgba(255, 224, 102, 0.6);
+  background: rgba(255, 224, 102, 0.1);
+}
+
+.board.results {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 100%;
+  max-width: 480px;
+  max-height: none;
+  margin: 16px 0;
+  padding: 16px;
+  font-size: 1.1rem;
+  pointer-events: auto;
+}
+
+.name-field {
+  max-width: 360px;
+  margin-top: 20px;
+}
+
+.code-copy {
+  padding: 4px 14px;
+  border: 1px dashed rgba(255, 179, 71, 0.6);
+  border-radius: 10px;
+  background: none;
+  color: #ffb347;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  cursor: copy;
 }
 
 .top-actions {
