@@ -9,7 +9,7 @@ const NAME_KEY = 'poptheballons.name';
   imports: [RouterLink],
   template: `
     <main class="page">
-      <h1>PopTheBallons</h1>
+      <h1>Pop The Ballons</h1>
       <p class="subtitle">Pop candy, dodge ghosts, climb the leaderboard.</p>
 
       @if (socket.room(); as r) {
