@@ -1,0 +1,245 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: radial-gradient(circle at 20% 10%, #3a1459 0%, #120428 60%);
+  color: #f4efff;
+}
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
+.page.center {
+  text-align: center;
+  padding-top: 60px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  color: #ffb347;
+  text-shadow: 0 3px 0 #5b1f00;
+}
+
+.subtitle,
+.hint {
+  opacity: 0.75;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  margin-top: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 20px;
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 16px;
+  background: rgba(20, 6, 40, 0.75);
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+input,
+select {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #5b3a8a;
+  border-radius: 10px;
+  background: #1c0b33;
+  color: #fff;
+}
+
+button {
+  font: inherit;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #2b1645;
+  color: #fff;
+  cursor: pointer;
+}
+
+button.primary {
+  background: linear-gradient(180deg, #ff9f1c, #e0671e);
+  color: #230d00;
+  font-weight: 700;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  color: #ff7b8f;
+}
+
+.tag {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #5b3a8a;
+  font-size: 0.75rem;
+}
+
+.tag.you {
+  background: #1d7a33;
+}
+
+.players {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #ffb347;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+}
+
+.stage canvas {
+  display: block;
+}
+
+.hud {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pill {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 179, 71, 0.4);
+  border-radius: 999px;
+  background: rgba(20, 6, 40, 0.7);
+  font-weight: 700;
+}
+
+.board {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  gap: 4px;
+  min-width: 170px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(20, 6, 40, 0.7);
+  font-size: 1.05rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.board .me {
+  color: #ffe066;
+}
+
+.ranking {
+  display: grid;
+  gap: 8px;
+  font-size: 1.2rem;
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rotate-hint {
+  display: none;
+}
+
+/* Only touch devices held upright (phones, tablets) are asked to turn.
+   Desktop and laptop windows are never blocked, even when taller than wide. */
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 24px;
+    background: rgba(18, 4, 40, 0.96);
+    font-size: 1.2rem;
+    text-align: center;
+  }
+}
+
+.phone-icon {
+  width: 56px;
+  height: 92px;
+  border: 4px solid #ffb347;
+  border-radius: 12px;
+  animation: turn-phone 2.4s ease-in-out infinite;
+}
+
+@keyframes turn-phone {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.banner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  padding: 6px;
+  background: #7a2a5a;
+  text-align: center;
+}
