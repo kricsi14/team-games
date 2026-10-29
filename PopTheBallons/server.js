@@ -25,10 +25,10 @@ const SPAWN_MIN_MS = 450;
 const SPAWN_MAX_MS = 800;
 // Density grows with the player count: more players means more balloons on screen
 // and more frequent spawns, so there are more to pop.
-const CAP_BASE = 10; // balloons on screen = CAP_BASE + CAP_PER_PLAYER per player
-const CAP_PER_PLAYER = 2;
-const CAP_MAX = 50;
-const SPAWN_PER_PLAYER = 0.1; // extra spawn rate for each player beyond the first
+const CAP_BASE = 22; // balloons on screen = CAP_BASE + CAP_PER_PLAYER per player
+const CAP_PER_PLAYER = 3;
+const CAP_MAX = 60;
+const SPAWN_SCALE = 1.0; // spawn rate grows with the square root of the extra players
 
 const CANDY_SHARE = 2 / 3; // 2 candy for every 1 ghost
 const GHOST_HOME_CHANCE = 5 / 6; // 5 of 6 ghost drift steps head to the nearest recent pop
@@ -105,6 +105,10 @@ function steer(b, recentPops, now) {
     const dir = Math.sign(target.x - b.x) || (Math.random() < 0.5 ? -1 : 1);
     b.vx = dir * GHOST_SPEED;
     b.vy = -b.rise;
+  } else if (b.enter !== 0) {
+    // Balloons that fly in from a side keep heading inward while they rise
+    b.vx = b.enter * rand(40, 90);
+    b.vy = -b.rise;
   } else {
     // Left or right, 1:1, while rising.
     b.vx = (Math.random() < 0.5 ? -1 : 1) * DRIFT_SPEED;
@@ -112,18 +116,22 @@ function steer(b, recentPops, now) {
   }
 }
 
-function newBalloon(room, now) {
+function newBalloon(room, now, fromSides = true) {
   const ghost = Math.random() >= CANDY_SHARE;
   const r = rand(26, 40);
+  // Most balloons rise from the bottom. Some fly in from the left or right edge.
+  const roll = fromSides ? Math.random() : 0.5;
+  const enter = roll < 0.2 ? 1 : roll < 0.4 ? -1 : 0; // +1 enters from the left, -1 from the right
   const b = {
     id: room.nextId++,
     ghost,
     value: ghost ? randInt(1, 3) : randInt(1, 5),
     color: randInt(0, COLOR_COUNT - 1),
-    x: rand(r, WORLD_W - r),
-    y: WORLD_H + r,
+    x: enter === 1 ? -r : enter === -1 ? WORLD_W + r : rand(r, WORLD_W - r),
+    y: enter === 0 ? WORLD_H + r : rand(WORLD_H * 0.3, WORLD_H * 0.95),
+    enter,
     r,
-    rise: rand(25, 70), // some balloons rise faster than others
+    rise: rand(60, 130), // some balloons rise faster than others
     vx: 0,
     vy: 0,
   };
@@ -136,7 +144,7 @@ function balloonCap(room) {
 }
 
 function spawnRate(room) {
-  return 1 + SPAWN_PER_PLAYER * Math.max(0, room.players.size - 1);
+  return 2 + SPAWN_SCALE * Math.sqrt(Math.max(0, room.players.size - 1));
 }
 
 function startGame(room) {
@@ -144,6 +152,12 @@ function startGame(room) {
   room.status = 'playing';
   room.balloons = [];
   room.recentPops = [];
+  // Start with a full board, spread over the screen, so the first seconds aren't empty
+  for (let i = 0; i < balloonCap(room); i++) {
+    const b = newBalloon(room, now, false);
+    b.y = rand(b.r, WORLD_H + b.r);
+    room.balloons.push(b);
+  }
   room.endsAt = now + room.duration * 1000;
   room.nextSpawnAt = now;
   room.nextDriftAt = now;
